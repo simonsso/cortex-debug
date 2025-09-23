@@ -4,7 +4,7 @@ import * as os from 'os';
 import { EventEmitter } from 'events';
 import { sync as commandExistsSync } from 'command-exists';
 
-const EXECUTABLE_NAMES = ['qemu-system-arm'];
+const EXECUTABLE_NAMES = ['/mnt/build/work/qemu-upstream/build/qemu-system-aarch64'];
 
 export class QEMUServerController extends EventEmitter implements GDBServerController {
     public portsNeeded: string[] = ['gdbPort'];
@@ -67,7 +67,7 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
         for (const name of EXECUTABLE_NAMES) {
             if (commandExistsSync(name)) { return name; }
         }
-        return 'qemu-system-arm';
+        return 'qemu-system-arm-XXX';
     }
 
     public allocateRTTPorts(): Promise<void> {
@@ -81,10 +81,13 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
             '-cpu', this.args.cpu,
             '-machine', this.args.machine,
             '-nographic',
-            '-semihosting-config', 'enable=on,target=native',
+            '-semihosting',
             '-gdb', 'tcp::' + gdbport.toString(),
             '-S',
-            '-kernel', this.args.executable
+            '-serial',
+            'file:axis/apboot.log',
+            '-device',
+            'loader,file=' + this.args.executable
         ];
 
         if (this.args.serverArgs) {

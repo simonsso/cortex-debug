@@ -1781,7 +1781,8 @@
                                 "description": "Machine Type Selection - used for QEMU server type",
                                 "enum": [
                                     "lm3s811evb",
-                                    "lm3s6965evb"
+                                    "lm3s6965evb",
+                                    "artpec-10"
                                 ]
                             },
                             "device": {
