@@ -333,6 +333,20 @@ export class GDBDebugSession extends LoggingDebugSession {
         response.body.supportsInstructionBreakpoints = true;
         response.body.supportsReadMemoryRequest = true;
         response.body.supportsWriteMemoryRequest = true;
+
+        const bptAppliesTo: DebugProtocol.BreakpointModeApplicability[] = ['source', /* 'exception' , */ 'data', 'instruction'];
+        response.body.breakpointModes = [
+            {
+                mode: 'default',
+                label: 'Let GDB decide which breakpoint method (HW or SW) to chose',
+                appliesTo: []
+            },
+            {
+                mode: 'hardware',
+                label: 'Request GDB to set a hardware breakpoint',
+                appliesTo: []
+            }
+        ];
         this.sendResponse(response);
     }
 
@@ -585,6 +599,16 @@ export class GDBDebugSession extends LoggingDebugSession {
             });
             this.usingParentServer = this.args.pvtMyConfigFromParent && !this.args.pvtMyConfigFromParent.detached;
             this.getTCPPorts(this.usingParentServer).then(async () => {
+                function clearTimers() {
+                    if (timeout) {
+                        clearTimeout(timeout);
+                        timeout = null;
+                    }
+                    if (feedbackTimer) {
+                        clearInterval(feedbackTimer);
+                        feedbackTimer = null;
+                    }
+                }
                 await this.serverController.allocateRTTPorts();     // Must be done before serverArguments()
                 const executable = this.usingParentServer ? null : this.serverController.serverExecutable();
                 const args = this.usingParentServer ? [] : this.serverController.serverArguments();
@@ -641,12 +665,16 @@ export class GDBDebugSession extends LoggingDebugSession {
                     doResolve();
                 }, GDBServer.SERVER_TIMEOUT);
 
+                let elapsed = 0;
+                let feedbackTimer = setInterval(() => {
+                    const svrName = this.serverController.name || this.args.servertype;
+                    elapsed += 5;
+                    this.handleMsg('stdout', `Still waiting for ${svrName} GDB Server to be ready, ${elapsed} seconds...\n`);
+                }, 5 * 1000);
+
                 this.serverController.serverLaunchStarted();
                 this.server.init().then(async (started) => {
-                    if (timeout) {
-                        clearTimeout(timeout);
-                        timeout = null;
-                    }
+                    clearTimers();
                     const commands = [];
                     try {
                         // This is where 4 things meet and they must all finish (in any order) before we can proceed
@@ -759,10 +787,7 @@ export class GDBDebugSession extends LoggingDebugSession {
                         }
                     });
                 }, (error) => {
-                    if (timeout) {
-                        clearTimeout(timeout);
-                        timeout = null;
-                    }
+                    clearTimers();
                     this.sendEvent(new TelemetryEvent(
                         'Error',
                         'Launching Server',
@@ -1475,7 +1500,7 @@ export class GDBDebugSession extends LoggingDebugSession {
     }
 
     private waitForServerExitAndRespond(response: DebugProtocol.DisconnectResponse) {
-        if (!this.server.isExternal()) {
+        if (!this.server.isExternal() && this.server.isProcessRunning()) {
             let nTimes = 60;
             let to = setInterval(() => {
                 if ((nTimes === 0) || this.quit) {
@@ -1499,11 +1524,14 @@ export class GDBDebugSession extends LoggingDebugSession {
                 }
             });
             // Note: If gdb exits first, then we kill the server anyways
-        } else {
+        } else if (this.miDebugger.isRunning()) {
             this.miDebugger.once('quit', () => {
                 this.serverConsoleLog('disconnectRequest sendResponse 1');
                 this.sendResponse(response);
             });
+        } else {
+            this.serverConsoleLog('disconnectRequest sendResponse 3');
+            this.sendResponse(response);
         }
     }
 
@@ -1563,6 +1591,16 @@ export class GDBDebugSession extends LoggingDebugSession {
                 await this.tryDeleteBreakpoints();
                 this.disableSendStoppedEvents = false;
                 this.attached = false;
+                if (this.args.overridePreEndSessionCommands) {
+                    for (const cmd of this.args.overridePreEndSessionCommands) {
+                        try {
+                            await this.miDebugger.sendCommand(cmd);
+                        } catch (e) {
+                            this.handleMsg('log', 'GDB commands overridePreEndSessionCommands failed ' + (e ? e.toString() : 'Unknown error') + '\n');
+                        }
+                    }
+                    await new Promise(() => setTimeout(() => {}, 5));
+                }
                 this.waitForServerExitAndRespond(response);     // Will wait asynchronously until the following actions are done
                 if (args.terminateDebuggee || args.suspendDebuggee) {
                     // There is no such thing as terminate for us. Hopefully, the gdb-server will
