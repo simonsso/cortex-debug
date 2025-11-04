@@ -85,3 +85,4 @@ Now, launch a debug session and you wil be able to use the primary VSCode window
 
 Parts of this extension are based upon Jan Jurzitza's (WebFreak) code-debug extension (https://github.com/WebFreak001/code-debug).<br>
 His project provided an excellent base for GDB MI parsing and interaction.
+
