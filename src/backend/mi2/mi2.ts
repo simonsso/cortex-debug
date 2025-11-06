@@ -76,6 +76,7 @@ export class MI2 extends EventEmitter implements IBackend {
         return new Promise<void>(async (resolve, reject) => {
             const isLive = this.forLiveGdb ? 'Live ' : '';
             this.process = ChildProcess.spawn(this.application, this.args, { cwd: cwd, env: this.procEnv });
+            this.log('log', 'ChildProcess.' + this.application + ' ' + cwd);
             this.pid = this.process.pid;
             this.process.stdout.on('data', this.stdout.bind(this));
             this.process.stderr.on('data', this.stderr.bind(this));
