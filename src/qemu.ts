@@ -1,6 +1,5 @@
 import { DebugProtocol } from '@vscode/debugprotocol';
-import { GDBServerController, ConfigurationArguments, createPortName } from './common';
-import * as os from 'os';
+import { GDBServerController, ConfigurationArguments, createPortName, qemuSerialPipePrefix } from './common';
 import { EventEmitter } from 'events';
 import { sync as commandExistsSync } from 'command-exists';
 
@@ -75,7 +74,9 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
     }
 
     public serverArguments(): string[] {
-        const gdbport = this.ports['gdbPort'];
+        const gdbport = this.ports[createPortName(this.args.targetProcessor)];
+        const serialCount = Math.max(0, Math.floor(Number(this.args.numCaptureSerial || 0)));
+        const serialPipePrefix = qemuSerialPipePrefix(gdbport);
 
         let cmdargs = [
             '-cpu', this.args.cpu,
@@ -85,6 +86,9 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
             '-gdb', 'tcp::' + gdbport.toString(),
             '-S',
         ];
+        for (let ix = 0; ix < serialCount; ix++) {
+            cmdargs = cmdargs.concat('-serial', `pipe:${serialPipePrefix}-${ix}`);
+        }
         if (this.args.serverOptionLoadWithDeviceFile) {
             cmdargs = cmdargs.concat('-device', 'loader,file=' + this.args.executable);
         } else {

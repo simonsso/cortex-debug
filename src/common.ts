@@ -360,6 +360,7 @@ export interface ConfigurationArguments extends DebugProtocol.LaunchRequestArgum
     // QEMU Specific
     cpu: string;
     machine: string;
+    numCaptureSerial: number;
 
     // External
     gdbTarget: string;
@@ -537,6 +538,10 @@ export function getGDBSWOInitCommands(config: SWOConfiguration): string[] {
 
 export function createPortName(procNum: number, prefix: string = 'gdbPort'): string {
     return prefix + ((procNum === 0) ? '' : procNum.toString());
+}
+
+export function qemuSerialPipePrefix(gdbPort: number): string {
+    return path.join(os.tmpdir(), `cortex-debug-qemu-serial-${gdbPort}`);
 }
 
 export function getAnyFreePort(preferred: number): Promise<number> {

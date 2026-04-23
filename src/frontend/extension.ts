@@ -8,7 +8,7 @@ import { LiveWatchTreeProvider, LiveVariableNode } from './views/live-watch';
 import { RTTCore, SWOCore } from './swo/core';
 import {
     ConfigurationArguments, RTTCommonDecoderOpts, RTTConsoleDecoderOpts,
-    CortexDebugKeys, ChainedEvents, ADAPTER_DEBUG_MODE, ChainedConfig
+    CortexDebugKeys, ChainedEvents, ADAPTER_DEBUG_MODE, ChainedConfig, createPortName, qemuSerialPipePrefix
 } from '../common';
 import { MemoryContentProvider } from './memory_content_provider';
 
@@ -28,6 +28,17 @@ interface SVDInfo {
     expression: RegExp;
     path: string;
 }
+
+interface QemuSerialPipeCapture {
+    channel: vscode.OutputChannel;
+    stream: fs.ReadStream | null;
+    timer: NodeJS.Timeout | null;
+}
+
+interface QemuSerialSessionCapture {
+    captures: QemuSerialPipeCapture[];
+}
+
 class ServerStartedPromise {
     constructor(
         public readonly name: string,
@@ -49,6 +60,7 @@ export class CortexDebugExtension {
     private SVDDirectory: SVDInfo[] = [];
     private functionSymbols: SymbolInformation[] | null = null;
     private serverStartedEvent: ServerStartedPromise | undefined;
+    private qemuSerialCaptures = new Map<string, QemuSerialSessionCapture>();
 
     constructor(private context: vscode.ExtensionContext) {
         const config = vscode.workspace.getConfiguration('cortex-debug');
@@ -399,6 +411,7 @@ export class CortexDebugExtension {
         this.functionSymbols = null;
         session.customRequest('get-arguments').then((args) => {
             newSession.config = args;
+            this.startQemuSerialCapture(session, args);
             let svdfile = args.svdFile;
             if (!svdfile) {
                 svdfile = this.getSVDFile(args.device);
@@ -421,6 +434,7 @@ export class CortexDebugExtension {
         if (session.type !== 'cortex-debug') { return; }
         const mySession = CDebugSession.FindSession(session);
         try {
+            this.disposeQemuSerialCapture(session);
             this.liveWatchProvider?.debugSessionTerminated(session);
             if (mySession?.swo) {
                 mySession.swo.debugSessionTerminated();
@@ -504,6 +518,115 @@ export class CortexDebugExtension {
             default:
                 break;
         }
+    }
+
+    private startQemuSerialCapture(session: vscode.DebugSession, args: ConfigurationArguments) {
+        this.disposeQemuSerialCapture(session);
+        const serialPipePaths = this.getQemuSerialPipePaths(args);
+        if (!Array.isArray(serialPipePaths) || serialPipePaths.length === 0) {
+            return;
+        }
+
+        const sessionCapture: QemuSerialSessionCapture = { captures: [] };
+        this.qemuSerialCaptures.set(session.id, sessionCapture);
+        serialPipePaths.forEach((pipePath, index) => {
+            if (typeof pipePath !== 'string' || pipePath.length === 0) {
+                return;
+            }
+            const channel = vscode.window.createOutputChannel(`QEMU Serial ${index} (${session.name})`);
+            const capture: QemuSerialPipeCapture = {
+                channel,
+                stream: null,
+                timer: null
+            };
+            sessionCapture.captures.push(capture);
+            capture.channel.show(true);
+            capture.channel.appendLine(`[cortex-debug] Waiting for serial pipe: ${pipePath}.out`);
+            this.waitAndAttachQemuSerialPipe(capture, pipePath);
+        });
+    }
+
+    private waitAndAttachQemuSerialPipe(capture: QemuSerialPipeCapture, pipePath: string) {
+        const outPath = `${pipePath}.out`;
+        let attempts = 0;
+        const maxAttempts = 300; // About 60 seconds at 200ms intervals
+        const attach = () => {
+            attempts++;
+            if (!fs.existsSync(outPath)) {
+                if (attempts >= maxAttempts) {
+                    capture.channel.appendLine(`[cortex-debug] Timed out waiting for serial pipe ${outPath}`);
+                    if (capture.timer) {
+                        clearInterval(capture.timer);
+                        capture.timer = null;
+                    }
+                }
+                return;
+            }
+
+            if (capture.timer) {
+                clearInterval(capture.timer);
+                capture.timer = null;
+            }
+
+            const stream = fs.createReadStream(outPath);
+            capture.stream = stream;
+            stream.on('data', (data) => {
+                capture.channel.append(typeof data === 'string' ? data : data.toString('utf8'));
+            });
+            stream.on('error', (e) => {
+                capture.channel.appendLine(`[cortex-debug] Serial pipe read error: ${e}`);
+            });
+            stream.on('close', () => {
+                capture.stream = null;
+            });
+            capture.channel.appendLine(`[cortex-debug] Attached to serial pipe: ${outPath}`);
+        };
+
+        capture.timer = setInterval(attach, 200);
+        attach();
+    }
+
+    private disposeQemuSerialCapture(session: vscode.DebugSession) {
+        const capture = this.qemuSerialCaptures.get(session.id);
+        if (!capture) {
+            return;
+        }
+        this.qemuSerialCaptures.delete(session.id);
+        for (const item of capture.captures) {
+            if (item.timer) {
+                clearInterval(item.timer);
+                item.timer = null;
+            }
+            try {
+                item.stream?.destroy();
+            } catch {
+                // Ignore stream cleanup failures at shutdown.
+            }
+            item.channel.dispose();
+        }
+    }
+
+    private getQemuSerialPipePaths(args: ConfigurationArguments): string[] {
+        const ret: string[] = [];
+        if (!args || args.servertype !== 'qemu') {
+            return ret;
+        }
+        const serialCount = Math.max(0, Math.floor(Number(args.numCaptureSerial || 0)));
+        if (serialCount <= 0) {
+            return ret;
+        }
+
+        const gdbKey = createPortName(args.targetProcessor);
+        const gdbPort = Number(args?.pvtPorts?.[gdbKey] || args?.pvtPorts?.gdbPort || 0);
+        if (!Number.isFinite(gdbPort) || gdbPort <= 0) {
+            return ret;
+        }
+
+        const prefix = qemuSerialPipePrefix(gdbPort);
+        for (let ix = 0; ix < serialCount; ix++) {
+            ret.push(`${prefix}-${ix}`);
+        }
+        return ret;
     }
 
     private signalPortsAllocated(e: vscode.DebugSessionCustomEvent) {
