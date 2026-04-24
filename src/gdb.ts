@@ -14,7 +14,7 @@ import { MI2, parseReadMemResults } from './backend/mi2/mi2';
 import { extractBits, hexFormat } from './frontend/utils';
 import { Variable, VariableObject, MIError, OurDataBreakpoint, OurInstructionBreakpoint, OurSourceBreakpoint } from './backend/backend';
 import {
-    TelemetryEvent, ConfigurationArguments, StoppedEvent, GDBServerController, SymbolFile,
+    ConfigurationArguments, StoppedEvent, GDBServerController, SymbolFile,
     createPortName, GenericCustomEvent, quoteShellCmdLine, toStringDecHexOctBin, ADAPTER_DEBUG_MODE, defSymbolFile, CTIAction, getPathRelative,
     SWOConfigureEvent, RTTCommonDecoderOpts
 } from './common';
@@ -728,11 +728,6 @@ export class GDBDebugSession extends LoggingDebugSession {
 
                 let timeout: any = setTimeout(() => {
                     this.server.exit();
-                    this.sendEvent(new TelemetryEvent(
-                        'Error',
-                        'Launching Server',
-                        `Failed to launch ${this.serverController.name || this.args.servertype} GDB Server: Timeout.`
-                    ));
                     this.launchErrorResponse(response, 103, `Failed to launch ${this.serverController.name || this.args.servertype} GDB Server: Timeout.`);
                     doResolve();
                 }, GDBServer.SERVER_TIMEOUT);
@@ -800,7 +795,6 @@ export class GDBDebugSession extends LoggingDebugSession {
                             const e = err as Error;
                             msg = 'Failed to generate gdb commands: ' + e.toString() + '\n' + (e.stack || '').toString();
                         }
-                        this.sendEvent(new TelemetryEvent('Error', 'Launching GDB', msg));
                         this.launchErrorResponse(response, 104, msg);
                         return doResolve();
                     }
@@ -854,7 +848,6 @@ export class GDBDebugSession extends LoggingDebugSession {
                         doResolve();
                     }, (err) => {
                         this.launchErrorResponse(response, 103, `Failed to launch GDB: ${err.toString()}`);
-                        this.sendEvent(new TelemetryEvent('Error', 'Launching GDB', err.toString()));
                         try {
                             this.miDebugger.stop();     // This should also kill the server if there is one
                             this.server.exit();
@@ -864,18 +857,12 @@ export class GDBDebugSession extends LoggingDebugSession {
                     });
                 }, (error) => {
                     clearTimers();
-                    this.sendEvent(new TelemetryEvent(
-                        'Error',
-                        'Launching Server',
-                        `Failed to launch ${this.serverController.name || this.args.servertype} GDB Server: ${error.toString()}`
-                    ));
                     this.launchErrorResponse(response, 103,
                         `Failed to launch ${this.serverController.name || this.args.servertype} GDB Server: ${error.toString()}`);
                     doResolve();
                     this.server.exit();
                 });
             }, (err) => {
-                this.sendEvent(new TelemetryEvent('Error', 'Launching Server', `Failed to find open ports: ${err.toString()}`));
                 this.launchErrorResponse(response, 103, `Failed to find open ports: ${err.toString()}`);
                 doResolve();
             });
@@ -1452,7 +1439,6 @@ export class GDBDebugSession extends LoggingDebugSession {
             this.sendResponse(response);
         }, (error) => {
             this.sendErrorResponse(response, 114, `Read memory error: ${error.toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Reading Memory', command));
         });
     }
 
@@ -1475,7 +1461,6 @@ export class GDBDebugSession extends LoggingDebugSession {
         }, (error) => {
             (response as DebugProtocol.Response).body = { error: error };
             this.sendErrorResponse(response, 114, `Write memory error: ${error.toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Writing Memory', `${startAddress.toString(16)}-${data.length.toString(16)}`));
         });
     }
 
@@ -1499,7 +1484,6 @@ export class GDBDebugSession extends LoggingDebugSession {
         }, (error) => {
             response.body = { error: error };
             this.sendErrorResponse(response, 114, `Read memory error: ${error.toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Reading Memory', `${startAddress}-${length.toString(16)}`));
         });
     }
 
@@ -1510,7 +1494,6 @@ export class GDBDebugSession extends LoggingDebugSession {
         }, (error) => {
             response.body = { error: error };
             this.sendErrorResponse(response, 114, `Write memory error: ${error.toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Writing Memory', `${startAddress.toString(16)}-${data.length.toString(16)}`));
         });
     }
 
@@ -1545,7 +1528,6 @@ export class GDBDebugSession extends LoggingDebugSession {
             }, (error) => {
                 response.body = { error: error };
                 this.sendErrorResponse(response, 115, `Unable to read registers: ${error.toString()}`);
-                this.sendEvent(new TelemetryEvent('Error', 'Reading Registers', ''));
             });
 
             if (!this.args.variableUseNaturalFormat) {
@@ -1584,7 +1566,6 @@ export class GDBDebugSession extends LoggingDebugSession {
         }, (error) => {
             response.body = { error: error };
             this.sendErrorResponse(response, 116, `Unable to read register list: ${(error).toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Reading Register List', ''));
         });
     }
 
@@ -2888,7 +2869,6 @@ export class GDBDebugSession extends LoggingDebugSession {
             }
         } catch (error) {
             this.sendErrorResponse(response, 116, `Unable to read register list: ${error.toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Reading Register List', ''));
             return;
         }
 
@@ -2945,7 +2925,6 @@ export class GDBDebugSession extends LoggingDebugSession {
             }
         } catch (error) {
             this.sendErrorResponse(response, 115, `Unable to read registers: ${(error).toString()}`);
-            this.sendEvent(new TelemetryEvent('Error', 'Reading Registers', ''));
             return;
         }
         response.body = { variables: registers };

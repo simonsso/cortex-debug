@@ -460,9 +460,6 @@ export class CortexDebugExtension {
             case 'rtt-configure':
                 this.receivedRTTConfigureEvent(e);
                 break;
-            case 'record-event':
-                this.receivedEvent(e);
-                break;
             case 'custom-event-post-start-server':
                 this.startChainedConfigs(e, ChainedEvents.POSTSTART);
                 break;
@@ -714,9 +711,6 @@ export class CortexDebugExtension {
             if (mySession.swo) { mySession.swo.debugContinued(); }
             if (mySession.rtt) { mySession.rtt.debugContinued(); }
         }
-    }
-
-    private receivedEvent(e: any) {
     }
 
     private receivedSWOConfigureEvent(e: vscode.DebugSessionCustomEvent) {
