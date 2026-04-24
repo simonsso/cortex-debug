@@ -85,15 +85,18 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
             '-semihosting-config', 'enable=on,target=native',
             '-gdb', 'tcp::' + gdbport.toString(),
             '-S',
-            '-kernel', this.args.executable
         ];
         for (let ix = 0; ix < serialCount; ix++) {
             cmdargs = cmdargs.concat('-serial', `pipe:${serialPipePrefix}-${ix}`);
         }
+        if (this.args.serverOptionLoadWithDeviceFile) {
+            cmdargs = cmdargs.concat('-device', 'loader,file=' + this.args.executable);
+        } else {
+            cmdargs = cmdargs.concat('-kernel', this.args.executable);
+        };
         if (this.args.serverArgs) {
             cmdargs = cmdargs.concat(this.args.serverArgs);
-        }
-
+        };
         return cmdargs;
     }
 

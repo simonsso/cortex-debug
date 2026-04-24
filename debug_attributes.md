@@ -83,6 +83,7 @@ If the type is marked as `{...}` it means that it is a complex item can have mul
 | searchDir | string[] | Both | OpenOCD directories to search for config files and scripts (-s option). If no search directories are specified, it defaults to the configured cwd. |
 | serialNumber | string | Both | J-Link or ST-LINK Serial Number - only needed if multiple J-Links/ST-LINKs are connected to the computer |
 | serverArgs | string[] | Both | Additional arguments to pass to GDB Server command line |
+| serverOptionLoadWithDeviceFile | boolean | Both | QEMU only: pass executable via '-device loader,file=...' instead of default '-kernel ...'. |
 | serverpath | string | Both | This setting can be used to override the GDB Server path user/workspace setting for a particular launch configuration. It is the full pathname to the executable or name of executable if it is in your PATH |
 | servertype | string | Both | GDB Server type - supported types are jlink, openocd, pyocd, pe, stlink, stutil, qemu, bmp and external. For "external", [please read our Wiki](https://github.com/Marus/cortex-debug/wiki/External-gdb-server-configuration). The executable in your PATH is used by default, to override this use serverpath. |
 | showDevDebugOutput | string | Both | Used to debug this extension. Prints all GDB responses to the console. 'raw' prints gdb responses, 'parsed' prints results after parsing, 'both' prints both. 'vscode' shows raw and VSCode interactions |

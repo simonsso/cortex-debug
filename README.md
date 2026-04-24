@@ -5,7 +5,7 @@
 Debugging support for ARM Cortex-M (and others) Microcontrollers with the following features:
 
 * While we cannot change the extension name due to VSCode Marketplace rules, this extension can be used by non Cortex-M devices and non ARM devices. People have reported using it with Cortex-R/A, Xtensa, RISC-V and even x86. Your mileage may vary.
-* Highly configurable. See https://github.com/Marus/cortex-debug/blob/master/debug_attributes.md
+* Highly configurable. See https://github.com/simonsso/cortex-debug/blob/master/debug_attributes.md
 * Support J-Link, OpenOCD GDB Server, STMicroelectronic's ST-LINK GDB server, pyOCD and the Black Magic Probe
 * Partial support textane/stlink (st-util) GDB Servers (SWO can only be captured via a serial port)
 * Multi-core and multi-session debugging. See https://github.com/Marus/cortex-debug/wiki/Multi-core-debugging
@@ -40,7 +40,7 @@ Cortex-Debug uses a [versioning system specified by Microsoft](https://code.visu
 
 ### Planned Features
 * Additional Graphing Options
-* [Our TODO file](https://github.com/Marus/cortex-debug/blob/master/TODO.md)
+* [Our TODO file](https://github.com/simonsso/cortex-debug/blob/master/TODO.md)
 
 ## Installation
 
@@ -61,13 +61,13 @@ Requirements:
 
 ## Usage
 
-See https://github.com/Marus/cortex-debug/wiki for usage information. This needs some help from the community. See https://github.com/Marus/cortex-debug/blob/master/debug_attributes.md for a summary of all properties that are available in your `launch.json`
+See https://github.com/Marus/cortex-debug/wiki for usage information. This needs some help from the community. See https://github.com/simonsso/cortex-debug/blob/master/debug_attributes.md for a summary of all properties that are available in your `launch.json`
 
 ## How to Build from sources
 
 Make sure you have git, NodeJS and typescript installed on your PC before you begin. See: https://code.visualstudio.com/docs/setup/additional-components
 
-* `git clone https://github.com/Marus/cortex-debug.git`
+* `git clone https://github.com/simonsso/cortex-debug.git`
 * `cd cortex-debug`
 * Optionally switch to a branch: `git checkout <existing-branch-name>`
 * `npm install`
