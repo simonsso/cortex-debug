@@ -86,15 +86,12 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
             '-gdb', 'tcp::' + gdbport.toString(),
             '-S',
         ];
-<<<<<<< HEAD
         if (this.args.executable) {
             cmdargs = cmdargs.concat('-kernel', this.args.executable);
         };
-=======
         for (let ix = 0; ix < serialCount; ix++) {
             cmdargs = cmdargs.concat('-serial', `pipe:${serialPipePrefix}-${ix}`);
         }
->>>>>>> master
         if (this.args.serverArgs) {
             cmdargs = cmdargs.concat(this.args.serverArgs);
         };
