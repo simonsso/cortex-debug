@@ -275,7 +275,6 @@ export interface ConfigurationArguments extends DebugProtocol.LaunchRequestArgum
     gdbInterruptMode: GDBInterruptMode;
     objdumpPath: string;
     serverArgs: string[];
-    serverOptionLoadWithDeviceFile: boolean;
     serverCwd: string;
     device: string;
     loadFiles: string[];
