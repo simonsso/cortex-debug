@@ -48,6 +48,7 @@ export class GDBServer extends EventEmitter {
     public static readonly SERVER_TIMEOUT = 10 * 60 * 1000;
     public static readonly LOCALHOST = '0.0.0.0';
     public pid: number | undefined = -1;
+    private serialPipeBases: string[] = [];
 
     constructor(
         private cwd: string | null, private application: string | null, private args: string[],
@@ -62,8 +63,9 @@ export class GDBServer extends EventEmitter {
                 this.initReject = reject;
                 try {
                     await this.connectToConsole();
+                    this.setupSerialPipes();
                 } catch (e) {
-                    ServerConsoleLog('GDBServer: Could not connect to console: ' + e);
+                    ServerConsoleLog('GDBServer: startup preparation failed: ' + e);
                     reject(e);
                 }
                 this.process = ChildProcess.spawn(this.application, this.args, { cwd: this.cwd || undefined });
@@ -137,7 +139,69 @@ export class GDBServer extends EventEmitter {
             ServerConsoleLog(`GDBServer(${this.pid}): exited code=${code} signal=${signal}`);
             this.emit('exit', code, signal);
             this.disconnectConsole();
+            this.cleanupSerialPipes();
         }, 10);
+    }
+
+    private setupSerialPipes() {
+        this.serialPipeBases = [];
+        if (process.platform === 'win32') {
+            return;
+        }
+
+        for (let ix = 0; ix < this.args.length - 1; ix++) {
+            if (this.args[ix] !== '-serial') {
+                continue;
+            }
+            const serialArg = this.args[ix + 1] || '';
+            if (!serialArg.startsWith('pipe:')) {
+                continue;
+            }
+            const pipeBase = serialArg.substring(5);
+            if (!pipeBase) {
+                continue;
+            }
+            this.createSerialPipePair(pipeBase);
+            this.serialPipeBases.push(pipeBase);
+            ix++;
+        }
+    }
+
+    private createSerialPipePair(pipeBase: string) {
+        const inPath = `${pipeBase}.in`;
+        const outPath = `${pipeBase}.out`;
+        this.recreateFifo(inPath);
+        this.recreateFifo(outPath);
+    }
+
+    private recreateFifo(pathName: string) {
+        try {
+            if (fs.existsSync(pathName)) {
+                fs.unlinkSync(pathName);
+            }
+        } catch {
+            // Ignore cleanup errors and try creating the FIFO anyway.
+        }
+        ChildProcess.execFileSync('mkfifo', [pathName]);
+    }
+
+    private cleanupSerialPipes() {
+        if (this.serialPipeBases.length === 0) {
+            return;
+        }
+        for (const base of this.serialPipeBases) {
+            for (const suffix of ['.in', '.out']) {
+                const fileName = `${base}${suffix}`;
+                try {
+                    if (fs.existsSync(fileName)) {
+                        fs.unlinkSync(fileName);
+                    }
+                } catch {
+                    // Ignore pipe cleanup failures at shutdown.
+                }
+            }
+        }
+        this.serialPipeBases = [];
     }
 
     private onError(err: any) {

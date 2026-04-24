@@ -1,5 +1,10 @@
 # ChangeLog
 
+# V2.0.0-pre1
+* Forked code from Marus and started to maintain it at https://github.com/simonsso/cortex-debug/
+* Removed telemetery
+
+
 # V1.13.0-pre9
 * Backed out change where we try "monitor exit". See [Issue #1185](https://github.com/Marus/cortex-debug/issues/1185)
 * Increased server temout to 10 mins

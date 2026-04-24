@@ -1,5 +1,5 @@
 {
-    "version": "1.13.0-pre9",
+    "version": "2.0.0-pre1",
     "preview": false,
     "activationEvents": [
         "onDebugResolve:cortex-debug",
@@ -652,6 +652,12 @@
                                     "lm3s6965evb",
                                     "mps2-an385"
                                 ]
+                            },
+                            "numCaptureSerial": {
+                                "default": 0,
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
                             },
                             "device": {
                                 "default": "",
@@ -1826,6 +1832,12 @@
                                     "lm3s811evb",
                                     "lm3s6965evb"
                                 ]
+                            },
+                            "numCaptureSerial": {
+                                "default": 0,
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
                             },
                             "device": {
                                 "default": "",
@@ -3117,7 +3129,6 @@
         }
     },
     "dependencies": {
-        "@vscode/extension-telemetry": "^0.9.8",
         "@vscode/webview-ui-toolkit": "^1.4.0",
         "binary-parser": "^2.3.0",
         "bindings": "^1.5.0",
@@ -3135,9 +3146,8 @@
         "serialport": "^13.0.0",
         "stream-json": "^1.9.1",
         "tmp": "^0.2.4",
-        "universal-analytics": "^0.5.3",
         "usb": "^2.14.0",
-        "uuid": "^11.0.5",
+        "uuid": "^14.0.0",
         "vscode-jsonrpc": "^8.2.1"
     },
     "description": "ARM Cortex-M GDB Debugger support for VSCode",

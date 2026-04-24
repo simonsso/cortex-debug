@@ -157,22 +157,6 @@ export class RTTConfigureEvent extends Event implements DebugProtocol.Event {
     }
 }
 
-export class TelemetryEvent extends Event implements DebugProtocol.Event {
-    public body: {
-        category: string;
-        action: string;
-        label: string;
-        parameters: { [key: string]: string };
-    };
-
-    public event: string;
-
-    constructor(category: string, action: string, label: string, parameters: { [key: string]: string } = {}) {
-        const body = { category: category, action: action, label: label, parameters: parameters };
-        super('record-event', body);
-    }
-}
-
 export enum ChainedEvents {
     POSTSTART = 'postStart', // Default - a connection was established with the gdb-server, before initialization is done
     POSTINIT = 'postInit'    /* all init functionality has been done. Generally past programming and stopped at or
@@ -360,6 +344,7 @@ export interface ConfigurationArguments extends DebugProtocol.LaunchRequestArgum
     // QEMU Specific
     cpu: string;
     machine: string;
+    numCaptureSerial: number;
 
     // External
     gdbTarget: string;
@@ -537,6 +522,10 @@ export function getGDBSWOInitCommands(config: SWOConfiguration): string[] {
 
 export function createPortName(procNum: number, prefix: string = 'gdbPort'): string {
     return prefix + ((procNum === 0) ? '' : procNum.toString());
+}
+
+export function qemuSerialPipePrefix(gdbPort: number): string {
+    return path.join(os.tmpdir(), `cortex-debug-qemu-serial-${gdbPort}`);
 }
 
 export function getAnyFreePort(preferred: number): Promise<number> {
