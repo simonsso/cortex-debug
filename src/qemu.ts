@@ -85,9 +85,7 @@ export class QEMUServerController extends EventEmitter implements GDBServerContr
             '-gdb', 'tcp::' + gdbport.toString(),
             '-S',
         ];
-        if (this.args.serverOptionLoadWithDeviceFile) {
-            cmdargs = cmdargs.concat('-device', 'loader,file=' + this.args.executable);
-        } else {
+        if (this.args.executable) {
             cmdargs = cmdargs.concat('-kernel', this.args.executable);
         };
         if (this.args.serverArgs) {
