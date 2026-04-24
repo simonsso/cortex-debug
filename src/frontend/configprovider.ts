@@ -504,6 +504,8 @@ export class CortexDebugConfigurationProvider implements vscode.DebugConfigurati
 
         if (!config.cpu) { config.cpu = 'cortex-m3'; }
         if (!config.machine) { config.machine = 'lm3s6965evb'; }
+        const serialCount = Number(config.numCaptureSerial ?? 0);
+        config.numCaptureSerial = Number.isFinite(serialCount) ? Math.max(0, Math.floor(serialCount)) : 0;
 
         if (config.swoConfig.enabled) {
             vscode.window.showWarningMessage('SWO support is not available when using QEMU.');

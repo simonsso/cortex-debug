@@ -653,6 +653,12 @@
                                     "mps2-an385"
                                 ]
                             },
+                            "numCaptureSerial": {
+                                "default": 0,
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
+                            },
                             "device": {
                                 "default": "",
                                 "description": "Target Device Identifier",
@@ -1826,6 +1832,12 @@
                                     "lm3s811evb",
                                     "lm3s6965evb"
                                 ]
+                            },
+                            "numCaptureSerial": {
+                                "default": 0,
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
                             },
                             "device": {
                                 "default": "",
