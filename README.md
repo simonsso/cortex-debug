@@ -87,5 +87,6 @@ Now, launch a debug session and you wil be able to use the primary VSCode window
 
 ## Acknowledgments
 
+This is a fork from Marcel Ball's cortex-debug https://github.com/Marus/cortex-debug.git
 Parts of this extension are based upon Jan Jurzitza's (WebFreak) code-debug extension (https://github.com/WebFreak001/code-debug).<br>
 His project provided an excellent base for GDB MI parsing and interaction.
