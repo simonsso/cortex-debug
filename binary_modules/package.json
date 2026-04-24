@@ -8,7 +8,14 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "electron-rebuild": "^3.2.8"
+    "electron-rebuild": "^3.2.9"
+  },
+  "overrides": {
+    "tar": "^7.5.13",
+    "@tootallnate/once": "^3.0.1",
+    "cross-spawn": "^7.0.6",
+    "socks": "^2.8.7",
+    "semver": "^7.7.4"
   },
   "dependencies": {
     "serialport": "^10.4.0",
