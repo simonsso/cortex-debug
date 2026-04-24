@@ -659,6 +659,11 @@
                                 "minimum": 0,
                                 "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
                             },
+                            "serverOptionLoadWithDeviceFile": {
+                                "default": false,
+                                "type": "boolean",
+                                "description": "QEMU only: pass executable via '-device loader,file=...' instead of default '-kernel ...'."
+                            },
                             "device": {
                                 "default": "",
                                 "description": "Target Device Identifier",
@@ -1838,6 +1843,11 @@
                                 "type": "number",
                                 "minimum": 0,
                                 "description": "QEMU only: number of serial ports to capture into separate VS Code OUTPUT tabs using -serial pipe:."
+                            },
+                            "serverOptionLoadWithDeviceFile": {
+                                "default": false,
+                                "type": "boolean",
+                                "description": "QEMU only: pass executable via '-device loader,file=...' instead of default '-kernel ...'."
                             },
                             "device": {
                                 "default": "",
