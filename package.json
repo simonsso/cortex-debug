@@ -3170,7 +3170,7 @@
         "@vscode/debugprotocol": "^1.68.0",
         "@vscode/test-electron": "^2.4.1",
         "globals": "^15.14.0",
-        "mocha": "^11.0.1",
+        "mocha": "12.0.0-beta-9.2",
         "ts-loader": "^9.5.2",
         "typescript": "^5.7.3",
         "typescript-eslint": "^8.20.0",
