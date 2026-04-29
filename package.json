@@ -3139,26 +3139,15 @@
         }
     },
     "dependencies": {
-        "@vscode/webview-ui-toolkit": "^1.4.0",
         "binary-parser": "^2.3.0",
-        "bindings": "^1.5.0",
         "command-exists": "^1.2.9",
-        "commander": "^13.0.0",
         "d3": "^7.9.0",
-        "debug": "^4.4.0",
         "hasbin": "^1.2.3",
-        "json-stream-stringify": "^3.1.6",
-        "nan": "^2.22.0",
         "node-interval-tree": "^2.1.2",
-        "prebuild-install": "^7.1.2",
         "ringbufferjs": "^2.0.0",
-        "safe-buffer": "^5.2.1",
         "serialport": "^13.0.0",
-        "stream-json": "^1.9.1",
         "tmp": "^0.2.4",
-        "usb": "^2.14.0",
-        "uuid": "^14.0.0",
-        "vscode-jsonrpc": "^8.2.1"
+        "usb": "^2.14.0"
     },
     "description": "ARM Cortex-M GDB Debugger support for VSCode",
     "devDependencies": {
